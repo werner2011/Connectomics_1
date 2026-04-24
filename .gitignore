@@ -168,7 +168,9 @@ cython_debug/
 #.idea/
 
 data/ 
-results/ 
+results/*
+!results/pictures/
+!results/pictures/*.png
 # Ruff stuff:
 .ruff_cache/
 
