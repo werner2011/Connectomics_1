@@ -25,32 +25,32 @@ Na podstawie tych danych tworzone są również cechy pochodne:
 - `leaf_branch_ratio`
 - `pre_post_ratio`
 
-Cable length: całkowita długość wszystkich segmentów szkieletu neuronu.
+`Cable length:` całkowita długość wszystkich segmentów szkieletu neuronu.
 
-Branch points liczba punktów rozgałęzień drzewa neuronalnego.
+`Branch points:` liczba punktów rozgałęzień drzewa neuronalnego.
 
-Leaf nodes: liczba terminalnych końców szkieletu.
+`Leaf nodes:` liczba terminalnych końców szkieletu.
 
 Branch density = branch_density = n_branches / cable_length
 
-Opisuje liczbę punktów rozgałęzień w odniesieniu do całkowitej długości neuronu.
+`Opisuje liczbę punktów rozgałęzień w odniesieniu do całkowitej długości neuronu.`
 
 Leaf - branch ratio leaf_branch_ratio = n_leafs / n_branches
 
-Prosta charakterystyka relacji między liczbą końców a liczbą rozgałęzień.
+`Prosta charakterystyka relacji między liczbą końców a liczbą rozgałęzień.`
 
 Pre / post ratio pre_post_ratio = n_pre / n_post
 
-Opisuje proporcję konektorów presynaptycznych do postsynaptycznych.
+`Opisuje proporcję konektorów presynaptycznych do postsynaptycznych.`
 
-Topologia
+# Topologia
 
 Każdy TreeNeuron może być analizowany jako graf.
 
 W projekcie wykorzystywane są:
 
-liczba węzłów grafu,
-liczba krawędzi grafu.
+ - liczba węzłów grafu,
+ - liczba krawędzi grafu.
 
 ## Pipeline analizy
 
