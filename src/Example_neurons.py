@@ -2,6 +2,7 @@ import navis
 from pathlib import Path 
 import pandas as pd
 import matplotlib.pyplot as plt 
+from plotly.graph_objects import Figure as PlotlyFigure
 """
 Użycie TreeNeuron - ten typ danych reprezentuje neuron jako szkielet drzewiasty. 
 Jest to DAG. 
@@ -24,6 +25,8 @@ def zapisz_plik(data, filename: str, results_dir: Path=RESULTS_DIR):
         file_path.write_text(data) 
     elif isinstance(data, plt.Figure): 
         data.savefig(file_path, bbox_inches='tight', dpi=300)
+    elif isinstance(data, PlotlyFigure):
+        data.write_html(file_path)
     else: 
         raise TypeError(f'Nieobsługiwany typ danych: {type(data)} ! ')
 
@@ -112,12 +115,36 @@ def print_neuron_details(neuron: navis.TreeNeuron):
         if "type" in neuron.connectors.columns:
             print(neuron.connectors["type"].value_counts())
 
-def plot_neurons(neurons:navis.TreeNeuron): 
-    fig = plt.figure(figsize=(8,6)) 
-    navis.plot2d(neurons, view=('x', '-z'), method='2d') 
-    plt.title('Example neurons - morphology') 
-    plt.tight_layout()
+def plot_neurons(neurons:navis.TreeNeuron, title: str, color_by=None, palette=None, view=('x', '-z'), method='2d'):
+    """
+    Uniwersalna funkcja do wizualizacji neuronów
+    za pomocą navis.plot2d().
+    """
+    plot_options = {
+        'view': view, 
+        'method': method
+    }
+    if color_by is not None:
+        plot_options['color_by'] = color_by 
+
+    if palette is not None: 
+        plot_options['palette'] = palette
+    fig, ax = navis.plot2d(neurons, **plot_options) 
+
+    ax.set_title(title)
+    fig.tight_layout() 
     return fig 
+
+def plot_neurons_3d(neurons, title="Neurons 3D"):
+    """
+    Interaktywna wizualizacja neuronów w 3D
+    za pomocą backendu Plotly.
+    """
+    fig = navis.plot3d(neurons,backend="plotly")
+
+    fig.update_layout(title=title)
+
+    return fig
 
 def plot_strahler(neuron:navis.TreeNeuron): 
     """
@@ -140,86 +167,84 @@ def plot_strahler(neuron:navis.TreeNeuron):
 
     return fig 
 
-def main() ->None: 
-    neurons = navis.example_neurons(n=3, kind='skeleton') #podanie neuronów o reprezentacji szieletowej
-    #Neurony pochodzą z drosophili, dostaję kolekcję NeuronList (gdzie poszczególne elementy są TreeNeuron) 
-    print("\nLiczba neuronów:", len(neurons))
-    print("Typ:", type(neurons))
+def main() -> None: 
+    #podanie neuronów o reprezentacji szieletowej 
+    #Neurony pochodzą z drosophili, dostaję kolekcję NeuronList (gdzie poszczególne elementy są TreeNeuron)
+    neurony = navis.example_neurons(n=3, kind='skeleton') 
+    print(f"Liczba neuronów: {len(neurony)}") 
+    print('Typ', type(neurony))
 
-    print("\nPodstawowe podsumowanie NAVis:")
-    print(neurons)
+    print("\n Podsumowanie NAVis: \n")
+    print(neurony)
 
     wyniki = []
-    for neuron in neurons: 
-        print_neuron_details(neuron=neuron) 
-        morphology = podsumuj_neuron(neuron) 
-        topology = analyze_topology(neuron) 
+    for neuron in neurony: 
+        print_neuron_details(neuron)
+        morfologia = podsumuj_neuron(neuron)
+        topologia = analyze_topology(neuron) 
 
-        morphology.update(topology) 
-        wyniki.append(morphology) 
+        morfologia.update(topologia) 
+
+        wyniki.append(morfologia) 
 
     df = pd.DataFrame(wyniki) 
-    print("\n============================================")
-    print("MORPHOLOGICAL SUMMARY")
-    print("============================================")
-
-    print(df)
-    """
-    Utworzenie nowych kolumn: 
+    print(df) 
+    # Dodatkowe cechy: 
+    """ Utworzenie nowych kolumn: 
     - branch_density - liczba rozgałęzień / długość neuronu 
-    - leaf_branch_ratio - charakterystyka struktury drzewa 
-    liczba końcówek neuronu / liczba rozgałęzień 
+    - leaf_branch_ratio - charakterystyka struktury drzewa liczba końcówek neuronu / liczba rozgałęzień 
     """
+
     df["branch_density"] = df["n_branches"]/ df["cable_length"]
 
-    df["leaf_branch_ratio"] = df["n_leafs"]/ df["n_branches"]
+    df["leaf_branch_ratio"] = df["n_leafs"] / df["n_branches"].replace(0, pd.NA)
 
     if "n_pre" in df.columns and "n_post" in df.columns:
+        df["pre_post_ratio"] = df["n_pre"]/ df["n_post"].replace(0, pd.NA)
+        #zabezpieczenie przed dzieleniem przez zero
 
-        df["pre_post_ratio"] = (df["n_pre"]/ df["n_post"].replace(0, pd.NA)) #zabezpieczenie przed dzieleniem przez zero 
+    ranking = df.sort_values('branch_density', ascending=False)
+    statistics = df[['n_nodes', 'n_branches', 'n_leafs', 'cable_length']].describe() 
 
-    print("\n============================================")
-    print("MORPHOLOGICAL RANKING")
-    print("============================================")
+    zapisz_plik(df, 'example_neurons_morphology.csv')
+    zapisz_plik(ranking, 'morphological_ranking.csv')
+    zapisz_plik(statistics, 'descriptive_statistics.csv')
 
-    ranking = df.sort_values("branch_density",ascending=False) #sortowanie według branch_density 
-    # czyli według gęstości rozgałęzień od największej do najmniejszej 
+    # wykresy 
+    fig = plot_neurons(neurony, "Example neurons - morphology") 
+    zapisz_plik(fig, 'examples_morphology.png') 
 
-    print(ranking[["id","cable_length","n_branches","branch_density"]]) #wybór najważniejszych kolumn 
+    for neuron in neurony:
+        neuron_copy = neuron.copy()
+        navis.strahler_index(neuron_copy)
+        fig = plot_neurons(neuron_copy, title=(f'Strahler index - {neuron.name}'), color_by='strahler_index', palette='viridis')
+        zapisz_plik(fig, f'strahler_{neuron.id}.png')
 
-    statistics = df[["n_nodes", "n_branches", "n_leafs", "cable_length"]].describe()
-    zapisz_plik(statistics,"descriptive_statistics.csv")
-    #describe() - automatycznie oblicza podstawowe statystyki dla kolumn numerycznych.
+    fig,ax = plt.subplots(figsize=(6, 5))
+    ax.scatter(
+        df["cable_length"],
+        df["n_branches"]
+    )
 
-    fig = plot_neurons(neurons)
-    zapisz_plik(fig, 'examples_morphology.png')
-
-    for neuron in neurons: #wykonanie dla każdego neuronu Strahlera
-        fig = plot_strahler(neuron)
-        zapisz_plik(fig, f'strahler_{neuron_id}.png')
-
-    plt.figure(figsize=(6, 5))
-    plt.scatter(df["cable_length"],df["n_branches"])
-
-
-    """
-    Podkreślenie _ jest konwencją Pythona:
-    - dostaję tę wartość, ale nie jest mi potrzebna.
-    """
     for neuron_id, x, y in zip(df['id'], df['cable_length'], df['n_branches']): 
         plt.annotate(str(neuron_id), (x,y)) 
 
-    plt.xlabel("Cable length")
-    plt.ylabel("Number of branch points")
-    plt.title("Morphology comparison")
+
+    ax.set_xlabel("Cable length")
+
+    ax.set_ylabel("Number of branch points")
+
+    ax.set_title("Morphology comparison")
 
     plt.tight_layout()
-    plt.show()
 
-    zapisz_plik(df,"example_neurons_morphology.csv")
-    zapisz_plik(ranking,"morphological_ranking.csv")
+    zapisz_plik(fig, 'morphology_comparison.png') 
 
+    fig3d = plot_neurons_3d(neurony,"Example neurons - 3D morphology")
 
+    zapisz_plik(fig3d,"examples_morphology_3d.html")
+
+    fig3d.show()
 
 if __name__ == "__main__":
     main()
