@@ -16,7 +16,9 @@ def zapisz_plik(data, filename: str, results_dir: Path=RESULTS_DIR):
     - pandas.DataFrame -> .csv
     - str -> .txt
     - matplotlib Figure -> .png, .jpg, .pdf
+    - Plotly Figure -> HTML
     """
+    results_dir.mkdir(parents=True, exist_ok=True)
     file_path = results_dir / filename 
 
     if isinstance(data, pd.DataFrame): 
@@ -26,7 +28,7 @@ def zapisz_plik(data, filename: str, results_dir: Path=RESULTS_DIR):
     elif isinstance(data, plt.Figure): 
         data.savefig(file_path, bbox_inches='tight', dpi=300)
     elif isinstance(data, PlotlyFigure):
-        data.write_html(file_path)
+        data.write_html(file_path,include_plotlyjs="cdn")
     else: 
         raise TypeError(f'Nieobsługiwany typ danych: {type(data)} ! ')
 
@@ -115,7 +117,7 @@ def print_neuron_details(neuron: navis.TreeNeuron):
         if "type" in neuron.connectors.columns:
             print(neuron.connectors["type"].value_counts())
 
-def plot_neurons(neurons:navis.TreeNeuron, title: str, color_by=None, palette=None, view=('x', '-z'), method='2d'):
+def plot_neurons2D(neurons:navis.TreeNeuron, title: str, color_by=None, palette=None, view=('x', 'z'), method='2d'):
     """
     Uniwersalna funkcja do wizualizacji neuronów
     za pomocą navis.plot2d().
@@ -135,50 +137,55 @@ def plot_neurons(neurons:navis.TreeNeuron, title: str, color_by=None, palette=No
     fig.tight_layout() 
     return fig 
 
-def plot_neurons_3d(neurons, title="Neurons 3D"):
+def plot_neurons_3d(
+    neurons,
+    title="Neurons - 3D morphology",
+    show_axes=False
+):
     """
-    Interaktywna wizualizacja neuronów w 3D
-    za pomocą backendu Plotly.
+    Interaktywna wizualizacja neuronów 3D
+    przy użyciu backendu Plotly.
     """
 
-    fig = navis.plot3d(neurons,backend="plotly")
+    fig = navis.plot3d(
+        neurons,
+        backend="plotly"
+    )
+
+    axis_options = dict(
+        visible=show_axes,
+        showgrid=show_axes,
+        zeroline=False,
+        showbackground=show_axes
+    )
 
     fig.update_layout(
+
         title=title,
 
         scene=dict(
+
+            # Zachowanie proporcji wynikających z danych
             aspectmode="data",
 
-            xaxis=dict(
-                title="X",
-                showgrid=True,
-                zeroline=False,
-                backgroundcolor="white"
-            ),
+            xaxis=axis_options,
+            yaxis=axis_options,
+            zaxis=axis_options,
 
-            yaxis=dict(
-                title="Y",
-                showgrid=True,
-                zeroline=False,
-                backgroundcolor="white"
-            ),
+            # Obracanie sceny jak obiektu
+            dragmode="orbit",
 
-            zaxis=dict(
-                title="Z",
-                showgrid=True,
-                zeroline=False,
-                backgroundcolor="white"
-            ),
-
+            # Początkowa pozycja kamery
             camera=dict(
                 eye=dict(
-                    x=1.5,
-                    y=1.5,
-                    z=1.2
+                    x=1.4,
+                    y=1.4,
+                    z=1.0
                 )
             )
         ),
 
+        # Minimalizacja pustych marginesów
         margin=dict(
             l=0,
             r=0,
@@ -187,10 +194,11 @@ def plot_neurons_3d(neurons, title="Neurons 3D"):
         ),
 
         legend=dict(
-            x=0.80,
+            x=0.82,
             y=0.95
         )
     )
+
     return fig
 
 def plot_strahler(neuron:navis.TreeNeuron): 
@@ -257,41 +265,67 @@ def main() -> None:
     zapisz_plik(ranking, 'morphological_ranking.csv')
     zapisz_plik(statistics, 'descriptive_statistics.csv')
 
-    # wykresy 
-    fig = plot_neurons(neurony, "Example neurons - morphology") 
-    zapisz_plik(fig, 'examples_morphology.png') 
+    # --------------------------------------------------------
+    # 8. Wszystkie neurony razem - 2D
+    # --------------------------------------------------------
+
+    fig = plot_neurons2D(neurony,title="Example neurons - morphology")
+    zapisz_plik(fig,"examples_morphology_2d.png")
+
+    # --------------------------------------------------------
+    # 9. Strahler index - każdy neuron osobno
+    # --------------------------------------------------------
 
     for neuron in neurony:
         neuron_copy = neuron.copy()
         navis.strahler_index(neuron_copy)
-        fig = plot_neurons(neuron_copy, title=(f'Strahler index - {neuron.name}'), color_by='strahler_index', palette='viridis')
-        zapisz_plik(fig, f'strahler_{neuron.id}.png')
 
-    fig,ax = plt.subplots(figsize=(6, 5))
-    ax.scatter(
-        df["cable_length"],
-        df["n_branches"]
-    )
+        fig = plot_neurons2D(neuron_copy,title=(f"Strahler index - {neuron.name} ({neuron.id})"),color_by="strahler_index",palette="viridis")
 
-    for neuron_id, x, y in zip(df['id'], df['cable_length'], df['n_branches']): 
-        plt.annotate(str(neuron_id), (x,y)) 
+        zapisz_plik(fig,f"strahler_{neuron.id}.png")
+    # --------------------------------------------------------
+    # 10. Cable length vs liczba rozgałęzień
+    # --------------------------------------------------------
 
+    fig, ax = plt.subplots(figsize=(7, 5))
+
+    ax.scatter(df["cable_length"],df["n_branches"])
+    for neuron_id, x, y in zip(df["id"],df["cable_length"],df["n_branches"]):
+        ax.annotate(str(neuron_id),(x, y))
 
     ax.set_xlabel("Cable length")
-
     ax.set_ylabel("Number of branch points")
 
     ax.set_title("Morphology comparison")
+    fig.tight_layout()
+    zapisz_plik(fig, "morphology_comparison.png")
+    # -------------------------------------------------------
+    # 11. Wszystkie neurony razem - interaktywne 3D
+    # --------------------------------------------------------
 
-    plt.tight_layout()
-
-    zapisz_plik(fig, 'morphology_comparison.png') 
-
-    fig3d = plot_neurons_3d(neurony,"Example neurons - 3D morphology")
+    fig3d = plot_neurons_3d(neurony,title="Example neurons - 3D morphology",show_axes=False)
 
     zapisz_plik(fig3d,"examples_morphology_3d.html")
 
+    # Ten widok otwieramy automatycznie
     fig3d.show()
+
+
+    # --------------------------------------------------------
+    # 12. Każdy neuron osobno - interaktywne 3D
+    # --------------------------------------------------------
+
+    for neuron in neurony:
+
+        fig3d = plot_neurons_3d(
+            neuron,
+            title=(
+                f"3D morphology - "
+                f"{neuron.name} ({neuron.id})"
+            ),show_axes=False
+        )
+
+        zapisz_plik(fig3d,f"neuron_3d_{neuron.id}.html")
 
 if __name__ == "__main__":
     main()
