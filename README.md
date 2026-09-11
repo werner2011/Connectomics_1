@@ -25,6 +25,18 @@ Na podstawie tych danych tworzone są również cechy pochodne:
 - `leaf_branch_ratio`
 - `pre_post_ratio`
 
+Cable length
+
+Całkowita długość wszystkich segmentów szkieletu neuronu.
+
+Branch points
+
+Liczba punktów rozgałęzień drzewa neuronalnego.
+
+Leaf nodes
+
+Liczba terminalnych końców szkieletu.
+
 ## Pipeline analizy
 
 ```text
@@ -38,8 +50,8 @@ navis.TreeNeuron
 │                                               │
 │  cable length   graph nodes   pre/post        │
 │  branches       graph edges                   │
-│  leafs                                         │
-│  extent x/y/z                                  │
+│  leafs                                        │
+│  extent x/y/z                                 │
 │                                               │
 └───────────────────────────────────────────────┘
       ↓
