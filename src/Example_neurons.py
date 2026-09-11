@@ -140,10 +140,57 @@ def plot_neurons_3d(neurons, title="Neurons 3D"):
     Interaktywna wizualizacja neuronów w 3D
     za pomocą backendu Plotly.
     """
+
     fig = navis.plot3d(neurons,backend="plotly")
 
-    fig.update_layout(title=title)
+    fig.update_layout(
+        title=title,
 
+        scene=dict(
+            aspectmode="data",
+
+            xaxis=dict(
+                title="X",
+                showgrid=True,
+                zeroline=False,
+                backgroundcolor="white"
+            ),
+
+            yaxis=dict(
+                title="Y",
+                showgrid=True,
+                zeroline=False,
+                backgroundcolor="white"
+            ),
+
+            zaxis=dict(
+                title="Z",
+                showgrid=True,
+                zeroline=False,
+                backgroundcolor="white"
+            ),
+
+            camera=dict(
+                eye=dict(
+                    x=1.5,
+                    y=1.5,
+                    z=1.2
+                )
+            )
+        ),
+
+        margin=dict(
+            l=0,
+            r=0,
+            b=0,
+            t=50
+        ),
+
+        legend=dict(
+            x=0.80,
+            y=0.95
+        )
+    )
     return fig
 
 def plot_strahler(neuron:navis.TreeNeuron): 
