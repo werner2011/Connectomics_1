@@ -35,11 +35,11 @@ Branch density = branch_density = n_branches / cable_length
 
 `Opisuje liczbę punktów rozgałęzień w odniesieniu do całkowitej długości neuronu.`
 
-Leaf - branch ratio leaf_branch_ratio = n_leafs / n_branches
+Leaf branch ratio = leaf_branch_ratio = n_leafs / n_branches
 
 `Prosta charakterystyka relacji między liczbą końców a liczbą rozgałęzień.`
 
-Pre / post ratio pre_post_ratio = n_pre / n_post
+Pre_post ratio = pre_post_ratio = n_pre / n_post
 
 `Opisuje proporcję konektorów presynaptycznych do postsynaptycznych.`
 
@@ -51,6 +51,23 @@ W projekcie wykorzystywane są:
 
  - liczba węzłów grafu,
  - liczba krawędzi grafu.
+
+# Strahler index
+
+Indeks Strahlera służy do opisu hierarchii rozgałęzień drzewa.
+
+Terminalne gałęzie otrzymują najniższe wartości, a kolejne poziomy rozgałęzień są porządkowane hierarchicznie.
+
+W projekcie indeks Strahlera jest wykorzystywany do kolorowania struktury neuronu w wizualizacji 2D.
+
+# Wizualizacje
+
+Projekt generuje kilka typów wykresów:
+
+ - morfologia wszystkich neuronów w 2D,
+ - osobne wizualizacje Strahlera,
+ - porównanie cable_length i n_branches,
+ - interaktywne wizualizacje neuronów w 3D.
 
 ## Pipeline analizy
 
