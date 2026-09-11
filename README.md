@@ -1,35 +1,54 @@
 # Connectomics_1
-Pierwsze rzeczy z konektomiki 
 
-3 przykładowe neurony
-        ↓
+Ćwiczeniowy projekt z analizy morfologii neuronów w Pythonie z użyciem biblioteki **NAVis**.
+
+Projekt służy do nauki podstaw konektomiki strukturalnej, reprezentacji neuronów jako drzewiastych szkieletów oraz ekstrakcji prostych cech morfologicznych i topologicznych.
+
+## Zakres projektu
+
+Analizowane są przykładowe neurony typu `navis.TreeNeuron`.
+
+Dla każdego neuronu wyznaczane są m.in.:
+
+- liczba węzłów,
+- liczba punktów rozgałęzień,
+- liczba terminalnych końców,
+- całkowita długość szkieletu,
+- rozpiętość w osiach `x`, `y`, `z`,
+- liczba konektorów,
+- liczba połączeń pre- i postsynaptycznych,
+- liczba węzłów i krawędzi grafu.
+
+Na podstawie tych danych tworzone są również cechy pochodne:
+
+- `branch_density`
+- `leaf_branch_ratio`
+- `pre_post_ratio`
+
+## Pipeline analizy
+
+```text
+Example neurons
+      ↓
 navis.TreeNeuron
-        ↓
- ┌───────────────┬────────────────┬─────────────────┐
- │               │                │                 │
-morfologia    topologia        connectors       wizualizacja
- │               │                │                 │
-length         graph           pre/post          plot2d
-branches       nodes                              Strahler
-leafs          edges
-extent
- │
- └────────────────────→ pandas.DataFrame
-                         ↓
-                   porównanie neuronów
-
-
-DataFrame z podstawowymi cechami
-              ↓
-      cechy pochodne
- branch_density
- leaf_branch_ratio
- pre_post_ratio
-              ↓
-          ranking
-              ↓
-   statystyki opisowe
-              ↓
-        wizualizacja
-              ↓
-zależność cable_length ↔ n_branches
+      ↓
+┌───────────────────────────────────────────────┐
+│                                               │
+│  morphology     topology      connectors      │
+│                                               │
+│  cable length   graph nodes   pre/post        │
+│  branches       graph edges                   │
+│  leafs                                         │
+│  extent x/y/z                                  │
+│                                               │
+└───────────────────────────────────────────────┘
+      ↓
+pandas.DataFrame
+      ↓
+derived features
+      ↓
+ranking
+      ↓
+descriptive statistics
+      ↓
+visualization
