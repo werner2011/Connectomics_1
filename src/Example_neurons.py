@@ -6,6 +6,29 @@ import matplotlib.pyplot as plt
 Użycie TreeNeuron - ten typ danych reprezentuje neuron jako szkielet drzewiasty. 
 Jest to DAG. 
 """
+RESULTS_DIR = Path.cwd() / 'results' / 'example_navis' 
+def zapisz_plik(data, filename: str, results_dir: Path=RESULTS_DIR): 
+    """
+    Zapisuje wyniki analizy do katalogu results.
+
+    Obsługiwane typy:
+    - pandas.DataFrame -> .csv
+    - str -> .txt
+    - matplotlib Figure -> .png, .jpg, .pdf
+    """
+    file_path = results_dir / filename 
+
+    if isinstance(data, pd.DataFrame): 
+        data.to_csv(file_path, index=False) 
+    elif isinstance(data, str):
+        file_path.write_text(data) 
+    elif isinstance(data, plt.Figure): 
+        data.savefig(file_path, bbox_inches='tight', dpi=300)
+    else: 
+        raise TypeError(f'Nieobsługiwany typ danych: {type(data)} ! ')
+
+    print(f'Zapisano: {file_path}') 
+
 def podsumuj_neuron(neuron: navis.TreeNeuron):
     """
     Zwraca cechy morfologiczne pojedynczego neuronu
@@ -90,10 +113,11 @@ def print_neuron_details(neuron: navis.TreeNeuron):
             print(neuron.connectors["type"].value_counts())
 
 def plot_neurons(neurons:navis.TreeNeuron): 
+    fig = plt.figure(figsize=(8,6)) 
     navis.plot2d(neurons, view=('x', '-z'), method='2d') 
     plt.title('Example neurons - morphology') 
     plt.tight_layout()
-    plt.show() 
+    return fig 
 
 def plot_strahler(neuron:navis.TreeNeuron): 
     """
@@ -108,11 +132,13 @@ def plot_strahler(neuron:navis.TreeNeuron):
     print(
         neuron_copy.nodes[['node_id', 'type', 'strahler_index']].head(20)
     )
+    fig = plt.figure(figsize=(8,6))
     navis.plot2d(neuron_copy, color_by='strahler_index', palette="viridis", view=('x', '-z'), method='2d') 
     # Pokoloruj strukturę neuronu zależnie od wartości indeksu Strahlera.
     plt.title(f"Strahler index - {neuron.name}") 
     plt.tight_layout()
-    plt.show() 
+
+    return fig 
 
 def main() ->None: 
     neurons = navis.example_neurons(n=3, kind='skeleton') #podanie neuronów o reprezentacji szieletowej
@@ -160,17 +186,17 @@ def main() ->None:
     # czyli według gęstości rozgałęzień od największej do najmniejszej 
 
     print(ranking[["id","cable_length","n_branches","branch_density"]]) #wybór najważniejszych kolumn 
-    print("\n============================================")
-    print("DESCRIPTIVE STATISTICS")
-    print("============================================")
 
-    print(df[["n_nodes","n_branches","n_leafs","cable_length"]].describe())
+    statistics = df[["n_nodes", "n_branches", "n_leafs", "cable_length"]].describe()
+    zapisz_plik(statistics,"descriptive_statistics.csv")
     #describe() - automatycznie oblicza podstawowe statystyki dla kolumn numerycznych.
 
-    plot_neurons(neurons)
+    fig = plot_neurons(neurons)
+    zapisz_plik(fig, 'examples_morphology.png')
 
     for neuron in neurons: #wykonanie dla każdego neuronu Strahlera
-        plot_strahler(neuron)
+        fig = plot_strahler(neuron)
+        zapisz_plik(fig, f'strahler_{neuron_id}.png')
 
     plt.figure(figsize=(6, 5))
     plt.scatter(df["cable_length"],df["n_branches"])
@@ -190,12 +216,9 @@ def main() ->None:
     plt.tight_layout()
     plt.show()
 
-    df.to_csv("example_neurons_morphology.csv",index=False)
+    zapisz_plik(df,"example_neurons_morphology.csv")
+    zapisz_plik(ranking,"morphological_ranking.csv")
 
-    print(
-        "\nWyniki zapisano do:"
-        "\nexample_neurons_morphology.csv"
-    )
 
 
 if __name__ == "__main__":
