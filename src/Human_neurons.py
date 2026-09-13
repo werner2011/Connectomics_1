@@ -29,6 +29,19 @@ def zaladuj_neurony():
 
     return navis.NeuronList(neurons) 
 
+def analyze_strahler(neuron): 
+    """
+    Oblicza statystki indeksu Strahlera 
+    """
+    neuron_copy = neuron.copy()
+    navis.strahler_index(neuron_copy) 
+    strahler = neuron_copy.nodes['strahler_index'] 
+    return { 
+        'strahler_max': strahler.max(), 
+        'strahler_mean': strahler.mean(), 
+        'strahler_median': strahler.median()
+    }
+
 def analyze_neuron(neurons): 
     """
     Liczy podstawowe cechy morfologiczne i topologiczne.
@@ -37,8 +50,11 @@ def analyze_neuron(neurons):
     for neuron in neurons:
         morphology = podsumuj_neuron(neuron)
         topology = analyze_topology(neuron)
+        strahler = analyze_strahler(neuron)
         morphology.update(topology)
+        morphology.update(strahler)
         results.append(morphology)
+        
 
     return pd.DataFrame(results)
 
@@ -52,6 +68,32 @@ def add_metrics(df):
     df['leaf_branch_ratio'] = df['n_leafs'] / df['n_branches'].replace(0, pd.NA) 
 
     return df 
+
+def plot_each_neuron(neurons): 
+    """
+    Tworzy osobne:
+    - PNG 2D
+    - PNG Strahlera
+    - HTML 3D
+
+    dla każdego neuronu.
+    """
+
+    for neuron in neurons: 
+        neuron_name = neuron.name 
+
+        fig = plot_neurons2D(neuron, title=f'Human pyramidal neuron - {neuron_name}') 
+        zapisz_plik(fig, f'{neuron_name}_2D.png', results_dir=RESULTS_DIR)
+        plt.close(fig) 
+
+        neuron_strahler = neuron.copy() 
+        navis.strahler_index(neuron_strahler) 
+        fig_strahler = plot_neurons2D(neuron_strahler, title=f'Strahler index - {neuron_name}', color_by='strahler_index', palette='viridis') 
+        zapisz_plik(fig_strahler, f'{neuron_name}_strahler.png', results_dir=RESULTS_DIR) 
+        plt.close(fig_strahler) 
+
+        fig3D = plot_neurons_3d(neuron, title=f'Human pyramidal neuron - {neuron_name}', show_axes=False)
+        zapisz_plik(fig3D, f'{neuron_name}_3D.html', results_dir=RESULTS_DIR) 
 
 def main() ->None: 
     neurons = zaladuj_neurony() 
@@ -67,6 +109,9 @@ def main() ->None:
             "cable_length",
             "branch_density",
             "leaf_branch_ratio",
+            "strahler_max",
+            "strahler_mean",
+            "strahler_median",
         ]
     ].describe() 
 
@@ -79,7 +124,8 @@ def main() ->None:
     fig3D = plot_neurons_3d(neurons, title='Human pyramidal neurons', show_axes=False) 
     zapisz_plik(fig3D, 'human_pyramidal_3D.html', results_dir=RESULTS_DIR) 
 
-    fig3D.show() 
+    plot_each_neuron(neurons) 
+    
 
 if __name__=="__main__":
     main() 
