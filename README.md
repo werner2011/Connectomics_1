@@ -1,4 +1,4 @@
-# Connectomics_1
+# Structural connectomics
 
 Ćwiczeniowy projekt z analizy morfologii neuronów w Pythonie z użyciem biblioteki **NAVis**.
 
