@@ -54,9 +54,61 @@ W projekcie wykorzystywane są:
 
 # Strahler index
 
-Indeks Strahlera służy do opisu hierarchii rozgałęzień drzewa.
 
-Terminalne gałęzie otrzymują najniższe wartości, a kolejne poziomy rozgałęzień są porządkowane hierarchicznie.
+**Strahler index** (Strahler order) jest miarą topologiczną opisującą
+hierarchię rozgałęzień struktury drzewiastej.
+
+Metoda została pierwotnie opracowana do opisu sieci rzecznych, ale może
+być stosowana do dowolnych struktur drzewiastych, w tym szkieletów neuronów.
+
+Neuron reprezentowany jako `TreeNeuron` może być traktowany jako graf
+drzewiasty, w którym:
+
+- wierzchołki odpowiadają punktom rekonstrukcji neuronu,
+- krawędzie odpowiadają fragmentom neurytów,
+- root reprezentuje początek drzewa,
+- leaf nodes reprezentują końcowe fragmenty drzewa,
+- branch points reprezentują miejsca rozgałęzień.
+
+Strahler order jest wyznaczany od końców drzewa w kierunku jego korzenia.
+
+Dla klasycznej definicji:
+
+1. Końcowym gałęziom drzewa przypisywany jest rząd 1.
+2. Jeżeli w węźle łączą się dwie gałęzie o takim samym rzędzie `k`,
+   gałąź powyżej otrzymuje rząd `k + 1`.
+3. Jeżeli spotykają się gałęzie o różnych rzędach, zachowywany jest
+   większy z tych rzędów.
+
+Przykład:
+
+        1       1
+         \     /
+          \   /
+            2
+            |
+        1   |   1
+         \  |  /
+          \ | /
+            2
+            |
+            2
+
+Im większy maksymalny indeks Strahlera, tym bardziej hierarchicznie
+rozbudowana jest struktura drzewa.
+
+W analizie neuronów Strahler index może służyć do:
+
+- opisu hierarchii drzewa dendrytycznego lub aksonalnego,
+- identyfikacji głównych i peryferyjnych gałęzi,
+- porównywania złożoności topologicznej neuronów,
+- oddzielania głównego szkieletu neuronu od cienkich końcowych gałęzi,
+- wizualizacji organizacji arboru neuronalnego.
+
+W NAVIS indeks Strahlera można obliczyć:
+
+```python
+navis.strahler_index(neuron)
 
 W projekcie indeks Strahlera jest wykorzystywany do kolorowania struktury neuronu w wizualizacji 2D.
 
