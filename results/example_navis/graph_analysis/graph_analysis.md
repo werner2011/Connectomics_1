@@ -45,6 +45,8 @@ Szkielet neuronu można interpretować jako drzewo:
 root ●────────●
 
 
+
+
 GitHub obsługuje w Markdown także prosty HTML. Zamiast trzech wielkich obrazów jeden pod drugim możesz zrobić:
 
 ```html
