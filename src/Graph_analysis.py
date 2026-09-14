@@ -11,7 +11,7 @@ from Example_neurons import(
 )
 RESULTS_DIR = Path.cwd() / 'results' / 'example_navis' / 'graph_analysis' 
 RESULTS_DIR.mkdir(parents=True, exist_ok=True) 
-def analyze_graph(neuron: navis.TreeNeuron): 
+def analyze_graph(neuron: navis.TreeNeuron,G, betweenness): 
     """
     Analiza grafowa neuronu 
     """
@@ -48,8 +48,7 @@ def analyze_graph(neuron: navis.TreeNeuron):
         distances_values = list(distances.values()) 
         mean_root_hops = np.mean(distances_values)
         max_root_hops = np.max(distances_values) 
-
-        betweenness = nx.betweenness_centrality(G) 
+ 
         max_betw = max(betweenness.values()) 
         mean_betw = np.mean(list(betweenness.values())) 
 
@@ -79,15 +78,69 @@ def analyze_graph(neuron: navis.TreeNeuron):
 
 
 
-def plot_betweenness(neuron:navis.TreeNeuron): 
+def plot_betweenness(neuron:navis.TreeNeuron, betweenness): 
     """
     Koloruje neuron według betweenness centrality.
     """
-    neuron_copy = neuron.copy() 
-    G = neuron_copy.graph.to_undirected() 
-    betweenness = nx.betweenness_centrality(G) 
+    neuron_copy = neuron.copy()  
     neuron_copy.nodes['betweenness'] = neuron_copy.nodes['node_id'].map(betweenness).fillna(0) 
     fig = plot_neurons2D(neuron_copy, title=f"Betweenness - {neuron.name}", color_by='betweenness', palette='viridis') 
+
+    return fig 
+
+def analyze_bottleneck(G, betweenness):  
+    bottleneck_node = max(betweenness, key=betweenness.get) 
+
+    bottleneck_value = betweenness[bottleneck_node] 
+    G_removed = G.copy() 
+    G_removed.remove_node(bottleneck_node) 
+
+    components = list(nx.connected_components(G_removed)) 
+
+    component_sizes = sorted(
+        [len(component) for component in components], 
+        reverse=True
+    ) 
+
+    return {
+        "bottleneck_node": bottleneck_node,
+        "bottleneck_betweenness": bottleneck_value,
+        "n_components_after_removal": len(components),
+        "largest_component": component_sizes[0],
+        "second_component": (
+            component_sizes[1]
+            if len(component_sizes) > 1
+            else 0
+        ),
+    }
+
+def plot_bottleneck(neuron: navis.TreeNeuron,G, betweenness, radius=20):
+    """
+    Pokazuje lokalny podgraf wokół węzła
+    o największym betweenness.
+    """
+    bottleneck_node = max(betweenness, key=betweenness.get)
+
+    subgraph = nx.ego_graph(G, bottleneck_node, radius=radius) 
+    nodes = neuron.nodes.set_index('node_id') 
+
+    pos = {
+        node: (
+            nodes.loc[node, 'x'], 
+            nodes.loc[node, 'z']
+        )
+        for node in subgraph.nodes 
+    }
+
+    fig, ax = plt.subplots(figsize=(8,8)) 
+
+    nx.draw_networkx_edges(subgraph, pos, ax=ax, width=1)
+    nx.draw_networkx_nodes(subgraph, pos, ax=ax, node_size=12)
+    nx.draw_networkx_nodes(subgraph, pos, nodelist=[bottleneck_node], ax=ax, node_size=100) 
+
+    ax.set_title(f'Bottleneck region - {neuron.id}') 
+    ax.axis('equal')
+    ax.axis('off') 
 
     return fig 
 
@@ -95,17 +148,24 @@ def main() -> None:
     neurony = navis.example_neurons(n=3, kind='skeleton') 
     results = []
     for neuron in neurony:
-        metrics = analyze_graph(neuron) 
+        G= neuron.graph.to_undirected()
+        betweenness = nx.betweenness_centrality(G) 
+        metrics = analyze_graph(neuron, G, betweenness) 
+        bottleneck = analyze_bottleneck(G, betweenness)
+        metrics.update(bottleneck)
         results.append(metrics) 
+
+        fig = plot_betweenness(neuron, betweenness) 
+        zapisz_plik(fig, f'betweenness_{neuron.id}.png', results_dir=RESULTS_DIR) 
+        plt.close(fig) 
+
+        fig = plot_bottleneck(neuron, G, betweenness, radius=20)
+        zapisz_plik(fig, f'bottleneck_{neuron.id}.png', results_dir=RESULTS_DIR)
+        plt.close(fig) 
 
     df = pd.DataFrame(results) 
     print(df) 
     zapisz_plik(df, 'graph_metrics.csv', results_dir=RESULTS_DIR) 
-
-    for neuron in neurony:
-        fig = plot_betweenness(neuron) 
-        zapisz_plik(fig, f'betweenness_{neuron.id}.png', results_dir=RESULTS_DIR) 
-        plt.close(fig) 
 
 if __name__=="__main__":
     main()  
