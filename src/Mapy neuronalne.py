@@ -18,6 +18,7 @@ def Mesh_neuron():
     print(neuron.vertices[1]) 
     print(neuron.faces[0])
 
+
 if __name__=="__main__": 
     DAG_neuron() 
     Mesh_neuron()
