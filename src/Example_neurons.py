@@ -137,34 +137,19 @@ def plot_neurons2D(neurons:navis.TreeNeuron, title: str, color_by=None, palette=
     fig.tight_layout() 
     return fig 
 
-def plot_neurons_3d(
-    neurons,
-    title="Neurons - 3D morphology",
-    show_axes=False
-):
+def plot_neurons_3d(neurons,title="Neurons - 3D morphology",show_axes=False):
     """
     Interaktywna wizualizacja neuronów 3D
     przy użyciu backendu Plotly.
     """
+    fig = navis.plot3d(neurons,backend="plotly")
 
-    fig = navis.plot3d(
-        neurons,
-        backend="plotly"
-    )
-
-    axis_options = dict(
-        visible=show_axes,
-        showgrid=show_axes,
-        zeroline=False,
-        showbackground=show_axes
-    )
+    axis_options = dict( visible=show_axes,showgrid=show_axes,zeroline=False,showbackground=show_axes)
 
     fig.update_layout(
-
         title=title,
 
         scene=dict(
-
             # Zachowanie proporcji wynikających z danych
             aspectmode="data",
 
@@ -283,9 +268,6 @@ def main() -> None:
         fig = plot_neurons2D(neuron_copy,title=(f"Strahler index - {neuron.name} ({neuron.id})"),color_by="strahler_index",palette="viridis")
 
         zapisz_plik(fig,f"strahler_{neuron.id}.png")
-    # --------------------------------------------------------
-    # 10. Cable length vs liczba rozgałęzień
-    # --------------------------------------------------------
 
     fig, ax = plt.subplots(figsize=(7, 5))
 
@@ -299,9 +281,7 @@ def main() -> None:
     ax.set_title("Morphology comparison")
     fig.tight_layout()
     zapisz_plik(fig, "morphology_comparison.png")
-    # -------------------------------------------------------
-    # 11. Wszystkie neurony razem - interaktywne 3D
-    # --------------------------------------------------------
+
 
     fig3d = plot_neurons_3d(neurony,title="Example neurons - 3D morphology",show_axes=False)
 
@@ -309,11 +289,6 @@ def main() -> None:
 
     # Ten widok otwieramy automatycznie
     fig3d.show()
-
-
-    # --------------------------------------------------------
-    # 12. Każdy neuron osobno - interaktywne 3D
-    # --------------------------------------------------------
 
     for neuron in neurony:
 
