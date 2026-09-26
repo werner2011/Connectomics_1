@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from Example_neurons import zapisz_plik
-RESULTS_DIR = (Path.cwd()/ "results"/ "example_navis"/ "morphology_analysis")
+RESULTS_DIR = Path.cwd() / "results" / "example_navis" / "morphology_analysis"
 RESULTS_DIR.mkdir(parents=True,exist_ok=True)
 def analyze_segments(neuron: navis.TreeNeuron):
     """
