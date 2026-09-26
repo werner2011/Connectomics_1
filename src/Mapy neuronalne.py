@@ -1,13 +1,23 @@
-from neuromaps import datasets, stats 
-map_a = datasets.fetch_annotation(source="margulies2016")
-map_b = datasets.fetch_annotation(source="neurosynth")
+import navis 
+import matplotlib.pyplot as plt 
+import networkx as nx 
+import numpy as np 
 
-r, p = stats.compare_images(
-    map_a,
-    map_b,
-    metric="pearsonr",
-    nan_policy="omit"
-)
+def DAG_neuron(): 
+    """
+    Opis formy TreeNeuron
+    """
+    neuron = navis.example_neurons(n=1, kind='skeleton') 
+    print(neuron.nodes.head()) 
 
-print("r =", r)
-print("p =", p)
+def Mesh_neuron():
+    """
+    Neuron w formie siatki
+    """
+    neuron = navis.example_neurons(n=1, kind='mesh') 
+    print(neuron.vertices[1]) 
+    print(neuron.faces[0])
+
+if __name__=="__main__": 
+    DAG_neuron() 
+    Mesh_neuron()
