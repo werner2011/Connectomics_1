@@ -8,7 +8,11 @@ def DAG_neuron():
     Opis formy TreeNeuron
     """
     neuron = navis.example_neurons(n=1, kind='skeleton') 
-    print(neuron.nodes.head()) 
+    nodes = neuron.nodes 
+    print(nodes.head()) 
+    print(f"Kolumny dla wierzchołków: {nodes.columns}")
+    print(f"Liczba wierzchołków: {len(neuron.nodes)}")
+    
 
 def Mesh_neuron():
     """
